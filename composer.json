@@ -1,0 +1,48 @@
+{
+  "name": "sendzly/sendzly-php",
+  "description": "SDK oficial de Sendzly para PHP y Laravel: envía correos transaccionales (MT 1-a-1), códigos OTP, facturas y plantillas dinámicas usando solo Mailserver Key y Campaign Key.",
+  "type": "library",
+  "homepage": "https://sendzly.com",
+  "license": "MIT",
+  "keywords": [
+    "sendzly",
+    "email",
+    "laravel",
+    "php",
+    "transactional-email",
+    "smtp",
+    "mailgun-alternative",
+    "venezuela",
+    "otp"
+  ],
+  "authors": [
+    {
+      "name": "Sendzly Team",
+      "email": "admin@sendzly.com",
+      "homepage": "https://sendzly.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.0",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "suggest": {
+    "illuminate/mail": "Para usar Sendzly como driver nativo de correo en Laravel 10/11/12 (MAIL_MAILER=sendzly)",
+    "symfony/mailer": "Requerido únicamente cuando se usa el driver nativo de Laravel"
+  },
+  "autoload": {
+    "psr-4": {
+      "Sendzly\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Sendzly\\Laravel\\SendzlyServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
