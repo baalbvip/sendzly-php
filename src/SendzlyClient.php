@@ -58,7 +58,58 @@ class SendzlyClient
             throw new SendzlyException('Los campos "to" y "subject" son obligatorios.', 400);
         }
 
-        return $this->request('POST', '/mt/send', $payload);
+        if (isset($payload['attachments']) && is_array($payload['attachments'])) {
+            $payload['attachments'] = $this->normalizeAttachments($payload['attachments']);
+        }
+
+        return $this->request('POST', '/send', $payload);
+    }
+
+    /**
+     * Normaliza adjuntos (PDFs, XML, imágenes) leyendo rutas locales `path` a Base64 automáticamente.
+     * Límites Sendzly: máx. 3 archivos, 5 MB por archivo, 10 MB total.
+     */
+    private function normalizeAttachments(array $attachments): array
+    {
+        $normalized = [];
+        foreach ($attachments as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $filename = (string) ($item['filename'] ?? $item['name'] ?? '');
+            $content = $item['content'] ?? null;
+
+            if (!empty($item['path']) && is_string($item['path'])) {
+                if (!is_readable($item['path'])) {
+                    throw new SendzlyException("No se pudo leer el archivo adjunto: {$item['path']}", 400);
+                }
+                $raw = file_get_contents($item['path']);
+                if ($raw === false) {
+                    throw new SendzlyException("Error al leer el archivo adjunto: {$item['path']}", 400);
+                }
+                $content = base64_encode($raw);
+                if ($filename === '') {
+                    $filename = basename($item['path']);
+                }
+            }
+
+            if ($filename === '' || !is_string($content) || $content === '') {
+                throw new SendzlyException(
+                    'Cada adjunto debe incluir "filename" y "content" (Base64) o "path" local.',
+                    400
+                );
+            }
+
+            $entry = [
+                'filename' => $filename,
+                'content' => $content,
+            ];
+            if (!empty($item['contentType'])) {
+                $entry['contentType'] = (string) $item['contentType'];
+            }
+            $normalized[] = $entry;
+        }
+        return $normalized;
     }
 
     /**
@@ -124,7 +175,7 @@ class SendzlyClient
         $headers = [
             'Accept: application/json',
             'Content-Type: application/json',
-            'User-Agent: sendzly-php/1.0.0',
+            'User-Agent: sendzly-php/1.1.0',
             'x-mailserver-key: ' . $this->mailserverKey,
             'x-campaign-key: ' . $this->campaignKey,
         ];
